@@ -1,18 +1,26 @@
 {
   "name": "linter-matlab",
   "main": "./lib/linter-matlab",
-  "version": "0.0.0",
-  "description": "A short description of your package",
+  "version": "1.0.0",
+  "description": "Linter plugin for MATLAB, using mlint",
   "keywords": [
+    "matlab",
+    "lint",
+    "linter",
+    "mlint"
   ],
-  "activationCommands": {
-    "atom-workspace": "linter-matlab:toggle"
-  },
-  "repository": "https://github.com/atom/linter-matlab",
+  "activationCommands": [],
+  "repository": "https://github.com/ajdm/linter-matlab",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
-  "dependencies": {
+  "dependencies": {},
+  "providedServices": {
+    "linter": {
+      "versions": {
+        "1.0.0": "provideLinter"
+      }
+    }
   }
 }
