@@ -1,33 +1,62 @@
-LinterMatlabView = require './linter-matlab-view'
-{CompositeDisposable} = require 'atom'
+{BufferedProcess, CompositeDisposable} = require 'atom'
 
-module.exports = LinterMatlab =
-  linterMatlabView: null
-  modalPanel: null
-  subscriptions: null
+module.exports =
+	config:
+		mlintDir:
+			default: ""
+			type: 'string'
+			title: 'Path to directory containing mlint'
 
-  activate: (state) ->
-    @linterMatlabView = new LinterMatlabView(state.linterMatlabViewState)
-    @modalPanel = atom.workspace.addModalPanel(item: @linterMatlabView.getElement(), visible: false)
+	activate: (state) ->
+		console.log 'linter-matlab loaded.'
+		@subscriptions = new CompositeDisposable
+		@subscriptions.add atom.config.observe 'linter-matlab.mlintDir',
+			(mlintDir) =>
+				@mlintDir = mlintDir
 
-    # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
-    @subscriptions = new CompositeDisposable
+	deactivate: ->
+		@subscriptions.dispose()
 
-    # Register command that toggles this view
-    @subscriptions.add atom.commands.add 'atom-workspace', 'linter-matlab:toggle': => @toggle()
+	provideLinter: ->
+		provider =
+			grammarScopes: ['source.matlab']
+			scope: 'file'
+			lintOnFly: false
+			lint: (textEditor) =>
+				return new Promise (resolve, reject) =>
+					filePath = textEditor.getPath()
+					results = []
+					process = new BufferedProcess
+						command: if @mlintDir? then @mlintDir + "mlint" else "mlint"
+						args: [filePath]
+						stderr: (output) ->
+							lines = output.split('\n')
+							lines.pop()
+							for line in lines
+								# Lines of form:
+								# L 22 (C 1-3): Invalid use of a reserved word.
+								# L 22 (C 32): Parse error at ')': usage might be invalid MATLAB syntax.
+								regex = /L (\d+) \(C (\d+)-?(\d+)?\): (.*)/
+								[_, linenum, columnstart, columnend, message] = line.match(regex)
+								if typeof columnend is 'undefined' then columnend = columnstart
+								result = {
+									range: [
+										[linenum - 1, columnstart - 1],
+										[linenum - 1, columnend - 1]
+									]
+									type: "warning"
+									text: message
+									filePath: filePath
+								}
+								results.push result
+						exit: (code) ->
+							return resolve [] unless code is 0
+							return resolve [] unless results?
+							resolve results
 
-  deactivate: ->
-    @modalPanel.destroy()
-    @subscriptions.dispose()
-    @linterMatlabView.destroy()
-
-  serialize: ->
-    linterMatlabViewState: @linterMatlabView.serialize()
-
-  toggle: ->
-    console.log 'LinterMatlab was toggled!'
-
-    if @modalPanel.isVisible()
-      @modalPanel.hide()
-    else
-      @modalPanel.show()
+					process.onWillThrowError ({error,handle}) ->
+						atom.notifications.addError "Failed to run MATLAB linter",
+							detail: "Directory containing mlint is set to '#{atom.config.get("linter-matlab.mlintDir")}'"
+							dismissable: true
+						handle()
+						resolve []
