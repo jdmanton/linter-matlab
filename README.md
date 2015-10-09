@@ -1,5 +1,9 @@
 # linter-matlab package
 
-A short description of your package.
+This Atom package provides a [Linter](https://atom.io/packages/linter) for MATLAB's `mlint` utility.
 
-![A screenshot of your package](https://f.cloud.github.com/assets/69169/2290250/c35d867a-a017-11e3-86be-cd7c5bf3ff9b.gif)
+## Installation
+
+1. Install the Linter package, following the instructions on [this page](https://atom.io/packages/linter).
+2. `apm install linter-matlab`
+2. If `mlint` is not already in your PATH, you will need to set the `mlintDir` setting to point to the directory containing `mlint`.
