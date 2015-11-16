@@ -1,4 +1,5 @@
 {BufferedProcess, CompositeDisposable} = require 'atom'
+path = require 'path'
 
 module.exports =
 	config:
@@ -27,7 +28,7 @@ module.exports =
 					filePath = textEditor.getPath()
 					results = []
 					process = new BufferedProcess
-						command: if @mlintDir? then @mlintDir + "mlint" else "mlint"
+						command: if @mlintDir? then path.join(@mlintDir, "mlint") else "mlint"
 						args: [filePath]
 						stderr: (output) ->
 							lines = output.split('\n')
