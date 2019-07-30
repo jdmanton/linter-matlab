@@ -20,9 +20,10 @@ module.exports =
 
 	provideLinter: ->
 		provider =
+			name: 'mlint'
 			grammarScopes: ['source.matlab']
 			scope: 'file'
-			lintOnFly: false
+			lintsOnChange: false
 			lint: (textEditor) =>
 				return new Promise (resolve, reject) =>
 					filePath = textEditor.getPath()
@@ -41,13 +42,15 @@ module.exports =
 								[_, linenum, columnstart, columnend, message] = line.match(regex)
 								if typeof columnend is 'undefined' then columnend = columnstart
 								result = {
-									range: [
-										[linenum - 1, columnstart - 1],
-										[linenum - 1, columnend - 1]
-									]
-									type: "warning"
-									text: message
-									filePath: filePath
+									location: {
+										file: filePath
+										position: [
+											[linenum - 1, columnstart - 1],
+											[linenum - 1, columnend - 1]
+										]
+									}
+									severity: "warning"
+									excerpt: message
 								}
 								results.push result
 						exit: (code) ->
